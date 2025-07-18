@@ -20,7 +20,7 @@ const options = {
 };
 
 // Google Maps API Key
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDbPfW8KvTni70E3O96AXA2quRJJkHIJfQ';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDkzOucrd3Jqd7UWJv6t9YinS7xtc8lMBw';
 
 type Course = {
   id: string;
