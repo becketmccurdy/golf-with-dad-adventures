@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Flag, MapPin, Calendar, Plus } from 'lucide-react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import './App.css';
@@ -106,6 +106,8 @@ const initialCourses: Course[] = [
 //   { id: '3', courseId: '2', date: '2025-05-30', score: 79, par: 72, rating: 4.9 },
 // ];
 
+const ADMIN_PASSWORD = 'golfdad2024';
+
 function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'map' | 'schedule'>('dashboard');
   const [courses, setCourses] = useState<Course[]>(initialCourses);
@@ -127,6 +129,30 @@ function App() {
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
+  // Autofill state for OSM suggestions
+  const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Fetch golf course suggestions from OSM Overpass API
+  const fetchCourseSuggestions = async (query: string) => {
+    if (!query || query.length < 3) {
+      setCourseSuggestions([]);
+      return;
+    }
+    setIsLoadingSuggestions(true);
+    try {
+      const url = `https://overpass-api.de/api/interpreter?data=[out:json];node[leisure=golf_course][name~%22${encodeURIComponent(query)}%22,i];out;`;
+      const response = await fetch(url);
+      const data = await response.json();
+      setCourseSuggestions(data.elements || []);
+    } catch (e) {
+      setCourseSuggestions([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
   // Dashboard stats based only on courses
   const totalCourses = courses.length;
   const averageRating = courses.length > 0 
@@ -146,6 +172,19 @@ function App() {
     const topCountry = Object.entries(countryCount).sort((a, b) => b[1] - a[1])[0];
     const topState = Object.entries(stateCount).sort((a, b) => b[1] - a[1])[0];
     return { topCountry, topState };
+  }, [courses]);
+
+  // On load, get courses from localStorage if available
+  useEffect(() => {
+    const savedCourses = localStorage.getItem('golf-courses');
+    if (savedCourses) {
+      setCourses(JSON.parse(savedCourses));
+    }
+  }, []);
+
+  // Whenever courses change, save to localStorage
+  useEffect(() => {
+    localStorage.setItem('golf-courses', JSON.stringify(courses));
   }, [courses]);
 
   useEffect(() => {
@@ -252,6 +291,18 @@ function App() {
       state: ''
     });
   };
+
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('golf-admin') === 'true';
+  });
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  // Persist admin status
+  useEffect(() => {
+    localStorage.setItem('golf-admin', isAdmin ? 'true' : 'false');
+  }, [isAdmin]);
 
   return (
     <div className="app">
@@ -377,25 +428,82 @@ function App() {
           <div className="courses">
             <div className="courses-header">
               <h2>Golf Courses</h2>
-              <button 
-                className="btn-primary"
-                onClick={() => setShowAddCourse(true)}
-              >
-                <Plus size={16} /> Add Course
-              </button>
+              {isAdmin ? (
+                <>
+                  <button 
+                    className="btn-primary"
+                    onClick={() => setShowAddCourse(true)}
+                  >
+                    <Plus size={16} /> Add Course
+                  </button>
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setIsAdmin(false)}
+                    style={{ marginLeft: 8 }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    className="btn-primary"
+                    disabled
+                  >
+                    <Plus size={16} /> Add Course (Locked)
+                  </button>
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setShowLogin(true)}
+                    style={{ marginLeft: 8 }}
+                  >
+                    Admin Login
+                  </button>
+                </>
+              )}
             </div>
 
             {(showAddCourse || editingCourse) && (
               <div className="course-form">
                 <h3>{editingCourse ? 'Edit Course' : 'Add New Course'}</h3>
-                <div className="form-group">
+                <div className="form-group" style={{ position: 'relative' }}>
                   <label>Course Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newCourse.name}
-                    onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
+                    onChange={e => {
+                      setNewCourse({ ...newCourse, name: e.target.value });
+                      fetchCourseSuggestions(e.target.value);
+                      setShowSuggestions(true);
+                    }}
                     placeholder="e.g. Pebble Beach Golf Links"
+                    autoComplete="off"
                   />
+                  {showSuggestions && courseSuggestions.length > 0 && (
+                    <ul className="suggestions-dropdown" style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', width: '100%', maxHeight: 200, overflowY: 'auto', listStyle: 'none', margin: 0, padding: 0 }}>
+                      {courseSuggestions.map((s, idx) => (
+                        <li
+                          key={s.id}
+                          style={{ padding: 8, cursor: 'pointer' }}
+                          onClick={() => {
+                            setNewCourse({
+                              ...newCourse,
+                              name: s.tags?.name || '',
+                              location: s.tags?.addr_city || '',
+                              lat: s.lat || 0,
+                              lng: s.lon || 0,
+                              country: s.tags?.addr_country || '',
+                              state: s.tags?.addr_state || ''
+                            });
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          {s.tags?.name} {s.tags?.addr_city ? `(${s.tags.addr_city})` : ''} {s.tags?.addr_country ? `- ${s.tags.addr_country}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {isLoadingSuggestions && <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', padding: 4 }}>Loading...</div>}
                 </div>
                 <div className="form-group">
                   <label>Location</label>
@@ -612,8 +720,26 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Made with ❤️ for golf adventures with dad</p>
+        <p>Made with ❤️. from Becket</p>
       </footer>
+
+      {showLogin && (
+        <div className="login-modal" style={{ background: '#fff', border: '1px solid #ccc', padding: 16, marginTop: 8 }}>
+          <label>Password: <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} /></label>
+          <button onClick={() => {
+            if (loginPassword === ADMIN_PASSWORD) {
+              setIsAdmin(true);
+              setShowLogin(false);
+              setLoginPassword('');
+              setLoginError('');
+            } else {
+              setLoginError('Incorrect password');
+            }
+          }}>Login</button>
+          <button onClick={() => { setShowLogin(false); setLoginPassword(''); setLoginError(''); }} style={{ marginLeft: 8 }}>Cancel</button>
+          {loginError && <div style={{ color: 'red', marginTop: 4 }}>{loginError}</div>}
+        </div>
+      )}
     </div>
   );
 }
