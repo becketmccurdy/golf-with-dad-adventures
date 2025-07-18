@@ -309,7 +309,7 @@ function App() {
                       position={{ lat: course.lat, lng: course.lng }}
                       title={course.name}
                       onClick={() => setSelectedCourse(course)}
-                      icon={{
+                      icon={window.google && window.google.maps ? {
                         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
                           '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
                           '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="white" stroke="%23e63946" stroke-width="2"/>' +
@@ -318,7 +318,7 @@ function App() {
                         )}`,
                         scaledSize: new window.google.maps.Size(24, 24),
                         anchor: new window.google.maps.Point(12, 12)
-                      }}
+                      } : undefined}
                     >
                       {selectedCourse?.id === course.id && (
                         <InfoWindow position={{ lat: course.lat, lng: course.lng }} onCloseClick={() => setSelectedCourse(null)}>
@@ -555,7 +555,7 @@ function App() {
                       lat: selectedCourse.lat,
                       lng: selectedCourse.lng
                     }}
-                    icon={{
+                    icon={window.google && window.google.maps ? {
                       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
                         '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
                         '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="white" stroke="%23e63946" stroke-width="2"/>' +
@@ -564,7 +564,7 @@ function App() {
                       )}`,
                       scaledSize: new window.google.maps.Size(32, 32),
                       anchor: new window.google.maps.Point(16, 16)
-                    }}
+                    } : undefined}
                   >
                     <InfoWindow position={{ lat: selectedCourse.lat, lng: selectedCourse.lng }}>
                       <div>
