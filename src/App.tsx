@@ -34,15 +34,16 @@ type Course = {
   country: string;
 };
 
-type Round = {
-  id: string;
-  courseId: string;
-  date: string;
-  score: number;
-  par: number;
-  rating: number;
-  notes?: string;
-};
+// Remove Round type
+// type Round = {
+//   id: string;
+//   courseId: string;
+//   date: string;
+//   score: number;
+//   par: number;
+//   rating: number;
+//   notes?: string;
+// };
 
 // Replace the sample initialCourses array with the user's real courses
 const initialCourses: Course[] = [
@@ -98,16 +99,18 @@ const initialCourses: Course[] = [
   { id: '50', name: 'Mill Race', location: 'PA', lat: 0, lng: 0, rating: 0, datePlayed: '', state: 'PA', country: 'USA' },
 ];
 
-const initialRounds: Round[] = [
-  { id: '1', courseId: '1', date: '2025-07-15', score: 82, par: 72, rating: 4.5 },
-  { id: '2', courseId: '3', date: '2025-06-22', score: 85, par: 72, rating: 4.8 },
-  { id: '3', courseId: '2', date: '2025-05-30', score: 79, par: 72, rating: 4.9 },
-];
+// Remove initialRounds
+// const initialRounds: Round[] = [
+//   { id: '1', courseId: '1', date: '2025-07-15', score: 82, par: 72, rating: 4.5 },
+//   { id: '2', courseId: '3', date: '2025-06-22', score: 85, par: 72, rating: 4.8 },
+//   { id: '3', courseId: '2', date: '2025-05-30', score: 79, par: 72, rating: 4.9 },
+// ];
 
 function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'map' | 'schedule'>('dashboard');
   const [courses, setCourses] = useState<Course[]>(initialCourses);
-  const [rounds] = useState<Round[]>(initialRounds);
+  // Remove rounds state
+  // const [rounds] = useState<Round[]>(initialRounds);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [newCourse, setNewCourse] = useState<Omit<Course, 'id'>>({ 
@@ -124,32 +127,26 @@ function App() {
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  // Calculate statistics
-  const totalRounds = rounds.length;
-  const averageRating = rounds.length > 0 
-    ? (rounds.reduce((sum, round) => sum + round.rating, 0) / rounds.length).toFixed(1)
+  // Dashboard stats based only on courses
+  const totalCourses = courses.length;
+  const averageRating = courses.length > 0 
+    ? (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1)
     : 0;
 
-  // Get most played countries and states
+  // Top country and state from courses
   const locationStats = useMemo(() => {
     const countryCount: Record<string, number> = {};
     const stateCount: Record<string, number> = {};
-
-    rounds.forEach(round => {
-      const course = courses.find(c => c.id === round.courseId);
-      if (course) {
-        countryCount[course.country] = (countryCount[course.country] || 0) + 1;
-        if (course.state) {
-          stateCount[course.state] = (stateCount[course.state] || 0) + 1;
-        }
+    courses.forEach(course => {
+      countryCount[course.country] = (countryCount[course.country] || 0) + 1;
+      if (course.state) {
+        stateCount[course.state] = (stateCount[course.state] || 0) + 1;
       }
     });
-
     const topCountry = Object.entries(countryCount).sort((a, b) => b[1] - a[1])[0];
     const topState = Object.entries(stateCount).sort((a, b) => b[1] - a[1])[0];
-
     return { topCountry, topState };
-  }, [rounds, courses]);
+  }, [courses]);
 
   useEffect(() => {
     if (activeTab === 'map' && mapInstance) {
@@ -293,8 +290,8 @@ function App() {
           <div className="dashboard">
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-value">{totalRounds}</div>
-                <div className="stat-label">Rounds Played</div>
+                <div className="stat-value">{totalCourses}</div>
+                <div className="stat-label">Courses Played</div>
               </div>
               <div className="stat-card">
                 <div className="stat-value">{averageRating}</div>
@@ -321,7 +318,7 @@ function App() {
                       setIsMapLoaded(true);
                     }}
                 >
-                  {courses.map(course => (
+                  {courses.filter(course => course.lat !== 0 && course.lng !== 0).map(course => (
                     <Marker
                       key={course.id}
                       position={{ lat: course.lat, lng: course.lng }}
@@ -354,7 +351,8 @@ function App() {
               </LoadScript>
             </div>
 
-            <div className="recent-rounds">
+            {/* Remove all UI and logic for rounds, scores, and recent rounds */}
+            {/* <div className="recent-rounds">
               <h2>Recent Rounds</h2>
               <div className="rounds-list">
                 {rounds.map(round => {
@@ -371,7 +369,7 @@ function App() {
                   ) : null;
                 })}
               </div>
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -444,6 +442,14 @@ function App() {
                     value={newCourse.rating}
                     onChange={(e) => setNewCourse({...newCourse, rating: parseFloat(e.target.value)})}
                   />
+                </div>
+                <div className="form-group">
+                  <label>Latitude</label>
+                  <input type="number" value={newCourse.lat} onChange={e => setNewCourse({...newCourse, lat: parseFloat(e.target.value)})} />
+                </div>
+                <div className="form-group">
+                  <label>Longitude</label>
+                  <input type="number" value={newCourse.lng} onChange={e => setNewCourse({...newCourse, lng: parseFloat(e.target.value)})} />
                 </div>
                 <div className="form-actions">
                   <button 
