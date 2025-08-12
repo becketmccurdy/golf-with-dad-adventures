@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function validateRound() {
+      let round = request.resource.data;
+      return round.date is timestamp &&
+             round.score is number &&
+             round.score > 0 &&
+             round.par is number &&
+             round.par > 0 &&
+             (round.rating == null || (round.rating is number && round.rating >= 0 && round.rating <= 5)) &&
+             (round.slope == null || (round.slope is number && round.slope > 0)) &&
+             (round.notes == null || round.notes is string);
+    }
+
+    function validateUser() {
+      let user = request.resource.data;
+      return user.displayName is string &&
+             (user.homeCourseName == null || user.homeCourseName is string) &&
+             (user.homeCourseLoc == null || user.homeCourseLoc is string) &&
+             (user.handicap == null || (user.handicap is number && user.handicap >= 0));
+    }
+
+    // Only authenticated users can access documents
+    match /users/{userId} {
+      // Users can only read/write their own documents with validation
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && validateUser();
+      
+      // Users can access their own courses and rounds
+      match /coursesPlayed/{courseId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+      
+      match /rounds/{roundId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && validateRound();
+        allow delete: if isOwner(userId);
+      }
+    }
+    
+    // Deny access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
