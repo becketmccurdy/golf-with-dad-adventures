@@ -1,21 +1,20 @@
-import * as Sentry from '@sentry/react';
 
-export const initSentry = () => {
+import * as Sentry from "@sentry/react";
+// ...existing code...
+import { Replay } from "@sentry/replay";
+
+export function initSentry() {
   if (import.meta.env.PROD) {
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       integrations: [
-        new Sentry.Integrations.BrowserTracing({
-          // Set sampling rate for performance monitoring
-          tracePropagationTargets: ['localhost', 'your-domain.com'],
-        }),
-        new Sentry.Integrations.Replay(),
+  // Tracing is automatic in Sentry v8+; no need for BrowserTracing integration
+        new Replay(),
       ],
-      // Performance Monitoring
-      tracesSampleRate: 1.0, // Capture 100% of transactions in development
-      // Session Replay
-      replaysSessionSampleRate: 0.1, // Sample rate for all sessions
-      replaysOnErrorSampleRate: 1.0, // Sample rate for sessions with errors
+      tracesSampleRate: 1.0,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+      environment: import.meta.env.MODE,
     });
   }
-};
+}

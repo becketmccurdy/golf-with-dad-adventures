@@ -25,10 +25,10 @@ describe('Button', () => {
 
   it('applies correct variant classes', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByText('Primary')).toHaveClass('bg-emerald-500');
+    expect(screen.getByText('Primary')).toHaveClass('from-emerald-500');
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByText('Secondary')).toHaveClass('bg-stone-200');
+    expect(screen.getByText('Secondary')).toHaveClass('from-stone-100');
 
     rerender(<Button variant="outline">Outline</Button>);
     expect(screen.getByText('Outline')).toHaveClass('bg-white');

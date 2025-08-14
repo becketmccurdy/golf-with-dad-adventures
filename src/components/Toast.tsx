@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
+import { ToastContext } from '../contexts/ToastContext';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -10,13 +11,14 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
   React.useEffect(() => {
+    if (isHovered) return; // pause auto-dismiss on hover
     const timer = setTimeout(() => {
       onClose();
     }, 5000);
-    
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, isHovered]);
   
   const icons = {
     success: <CheckCircle data-testid="success-icon" className="text-green-500" size={20} />,
@@ -33,12 +35,19 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   };
   
   return (
-    <div className={`flex items-center p-4 mb-2 rounded-xl shadow-md ${bgColors[type]} border border-stone-100`}>
+    <div 
+      className={`flex items-center p-4 mb-2 rounded-xl shadow-md ${bgColors[type]} border border-stone-100`}
+      role="status"
+      aria-live="polite"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="mr-3">{icons[type]}</div>
       <div className="flex-1 text-sm">{message}</div>
       <button 
         onClick={onClose} 
-        className="ml-4 p-1 rounded-full hover:bg-stone-200"
+        className="ml-4 p-1 rounded-full hover:bg-stone-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        aria-label="Close notification"
       >
         <XCircle size={16} />
       </button>
@@ -46,11 +55,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   );
 };
 
-interface ToastContextProps {
-  showToast: (message: string, type: ToastType) => void;
-}
-
-const ToastContext = React.createContext<ToastContextProps | undefined>(undefined);
+// Context lives in src/contexts/ToastContext.ts
 
 interface Toast {
   id: string;
@@ -87,10 +92,4 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export const useToast = () => {
-  const context = React.useContext(ToastContext);
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
+// Hook moved to src/hooks/useToast.ts to comply with react-refresh rules

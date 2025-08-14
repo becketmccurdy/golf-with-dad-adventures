@@ -19,15 +19,15 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = "rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2";
+  const baseClasses = "rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 relative overflow-hidden group";
   
   const variantClasses = {
-    primary: "bg-emerald-500 text-white hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-emerald-300",
-    secondary: "bg-stone-200 text-stone-700 hover:bg-stone-300 active:bg-stone-400 disabled:bg-stone-100 disabled:text-stone-400",
-    outline: "bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 active:bg-stone-100 disabled:bg-stone-50 disabled:text-stone-400"
+    primary: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 active:from-emerald-700 active:to-emerald-800 disabled:from-emerald-300 disabled:to-emerald-300 shadow-lg hover:shadow-xl",
+    secondary: "bg-gradient-to-r from-stone-100 to-stone-200 text-stone-700 hover:from-stone-200 hover:to-stone-300 active:from-stone-300 active:to-stone-400 disabled:from-stone-100 disabled:to-stone-100 disabled:text-stone-400 border border-stone-200 hover:border-stone-300",
+    outline: "bg-white border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 active:bg-emerald-100 disabled:bg-stone-50 disabled:text-stone-400 disabled:border-stone-200"
   };
   
-  const sizeClasses = "px-4 py-2 text-sm";
+  const sizeClasses = "px-6 py-3 text-sm";
   const widthClass = fullWidth ? "w-full" : "";
   
   return (
@@ -36,12 +36,14 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={isLoading || disabled}
       {...props}
     >
+      {/* Shimmer effect for primary buttons */}
+      {variant === 'primary' && !isLoading && (
+        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:translate-x-full transition-transform duration-700" />
+      )}
+      
       {isLoading ? (
         <div className="flex items-center justify-center">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
           <span>Loading...</span>
         </div>
       ) : children}

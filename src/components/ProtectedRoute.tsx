@@ -10,10 +10,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, isLoading } = useAuth();
 
   if (isLoading) {
-    // You could render a loading spinner here
     return (
-      <div className="flex items-center justify-center h-screen bg-stone-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+      <div className="flex items-center justify-center h-screen bg-stone-50" role="status" aria-live="polite" aria-busy="true">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500" aria-label="Loading" />
       </div>
     );
   }

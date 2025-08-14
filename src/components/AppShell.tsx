@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Link, Outlet } from 'react-router-dom';
-import { MapPin, PlusCircle, History, UserCircle, LogOut } from 'lucide-react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { PlusCircle, History, UserCircle, LogOut, BarChart3 } from 'lucide-react';
+import golfIcon from '../assets/golf-icon.svg';
 
 interface AppShellProps {
   children?: React.ReactNode;
@@ -9,68 +10,135 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { currentUser, userProfile, signOut } = useAuth();
+  const navigate = useNavigate();
   
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const navigationItems = [
+    { to: '/dashboard', icon: BarChart3, label: 'Dashboard', shortLabel: 'Home' },
+    { to: '/add', icon: PlusCircle, label: 'Add Round', shortLabel: 'Add' },
+    { to: '/history', icon: History, label: 'History', shortLabel: 'History' },
+    { to: '/profile', icon: UserCircle, label: 'Profile', shortLabel: 'Profile' }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-stone-50 to-emerald-50/30">
+      {/* Skip Navigation Link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-emerald-600 text-white px-4 py-2 rounded-md z-50 focus:z-50"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link to="/dashboard" className="font-semibold text-lg">
-            <span className="text-emerald-500">Golf</span>
-            <span> with Dad</span>
+      <header className="bg-white/90 backdrop-blur-sm border-b border-emerald-100 px-4 lg:px-6 h-16 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3 group">
+            <img src={golfIcon} alt="Golf Icon" className="w-9 h-9 group-hover:scale-105 transition-transform duration-200" />
+            <div className="hidden sm:block">
+              <div className="font-bold text-lg bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                Golf with Dad
+              </div>
+              <div className="text-xs text-emerald-600/70 -mt-1">Adventures Await</div>
+            </div>
           </Link>
         </div>
         
         {currentUser && (
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => signOut()} 
-              className="text-stone-500 hover:text-stone-700 flex items-center gap-1 text-sm"
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-            <Link to="/profile" className="flex items-center gap-2">
-              {userProfile?.photoURL ? (
-                <img 
-                  src={userProfile.photoURL} 
-                  alt={userProfile.displayName || 'Profile'} 
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center">
-                  <UserCircle size={20} className="text-stone-500" />
-                </div>
-              )}
-            </Link>
+          <div className="flex items-center gap-2 lg:gap-4">
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 ${
+                        isActive
+                          ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                          : 'text-stone-600 hover:text-emerald-600 hover:bg-emerald-50'
+                      }`
+                    }
+                  >
+                    <Icon size={16} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </nav>
+
+            {/* User Menu */}
+            <div className="flex items-center gap-3 ml-4">
+              <button 
+                onClick={handleSignOut} 
+                className="text-stone-500 hover:text-emerald-600 flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-xl hover:bg-emerald-50 transition-all duration-200"
+                aria-label="Sign out of your account"
+              >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+              
+              <Link 
+                to="/profile" 
+                className="flex items-center gap-2 p-1 rounded-xl hover:bg-emerald-50 transition-all duration-200"
+                aria-label={`View profile${userProfile?.displayName ? ` for ${userProfile.displayName}` : ''}`}
+              >
+                {userProfile?.photoURL ? (
+                  <img 
+                    src={userProfile.photoURL} 
+                    alt={userProfile.displayName || 'Profile'} 
+                    className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-100"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-sm">
+                    <UserCircle size={18} className="text-white" />
+                  </div>
+                )}
+              </Link>
+            </div>
           </div>
         )}
       </header>
-      
+
       {/* Main Content */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1 relative pb-20 lg:pb-0">
         {children || <Outlet />}
       </main>
-      
+
       {/* Mobile Bottom Navigation */}
       {currentUser && (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 flex justify-around items-center h-16 px-2 z-10">
-          <Link to="/dashboard" className="flex flex-1 flex-col items-center justify-center py-2 text-stone-600 hover:text-emerald-500">
-            <MapPin size={20} />
-            <span className="text-xs mt-1">Dashboard</span>
-          </Link>
-          <Link to="/add" className="flex flex-1 flex-col items-center justify-center py-2 text-stone-600 hover:text-emerald-500">
-            <PlusCircle size={20} />
-            <span className="text-xs mt-1">Add Round</span>
-          </Link>
-          <Link to="/history" className="flex flex-1 flex-col items-center justify-center py-2 text-stone-600 hover:text-emerald-500">
-            <History size={20} />
-            <span className="text-xs mt-1">History</span>
-          </Link>
-          <Link to="/profile" className="flex flex-1 flex-col items-center justify-center py-2 text-stone-600 hover:text-emerald-500">
-            <UserCircle size={20} />
-            <span className="text-xs mt-1">Profile</span>
-          </Link>
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-emerald-100 px-4 py-2 z-50" aria-label="Mobile navigation">
+          <div className="flex justify-around items-center max-w-sm mx-auto">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 ${
+                      isActive ? 'text-emerald-600 bg-emerald-50' : 'text-stone-500 hover:text-emerald-600'
+                    }`
+                  }
+                  aria-label={item.label}
+                >
+                  <Icon size={20} />
+                  <span className="text-xs font-medium">{item.shortLabel}</span>
+                </NavLink>
+              );
+            })}
+          </div>
         </nav>
       )}
     </div>

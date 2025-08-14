@@ -12,9 +12,9 @@ import {
 import type { User as FirebaseUser } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, googleProvider, firestore } from '../lib/firebase';
+import { trackUserSignIn, trackUserSignOut } from '../lib/analytics';
 import type { User } from '../types';
 import { userConverter } from '../types';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './authContext';
 import type { AuthContextType } from './authContext';
 
@@ -22,7 +22,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -67,7 +66,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/dashboard');
+      trackUserSignIn('google');
+      // Navigation will be handled by the calling component
     } catch (error) {
       console.error("Error signing in with Google:", error);
       throw error;
@@ -94,7 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const credential = PhoneAuthProvider.credential(verificationId, code);
       await signInWithCredential(auth, credential);
-      navigate('/dashboard');
+      trackUserSignIn('phone');
+      // Navigation will be handled by the calling component
     } catch (error) {
       console.error("Error confirming verification code:", error);
       throw error;
@@ -103,8 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      trackUserSignOut();
       await firebaseSignOut(auth);
-      navigate('/login');
+      // Navigation will be handled by the calling component
     } catch (error) {
       console.error("Error signing out:", error);
       throw error;
@@ -126,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     currentUser,
     userProfile,
     isLoading,

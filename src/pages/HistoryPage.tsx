@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { AppShell } from '../components/AppShell';
 import { Card } from '../components/Card';
 import { CourseCard } from '../components/CourseCard';
-import { MapSection } from '../components/MapSection';
+import { LazyMapSection } from '../components/LazyMapSection';
 import { RoundCard } from '../components/RoundCard';
 import { CourseCardSkeleton } from '../components/Skeletons';
 import { List, Calendar, Map, Search, X, ChevronDown } from 'lucide-react';
@@ -11,12 +11,14 @@ import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
 import { courseConverter, roundConverter } from '../types';
 import type { Course, Round } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 type ViewMode = 'list' | 'map';
 type FilterYear = string | 'all';
 
 const HistoryPage: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
@@ -310,7 +312,7 @@ const HistoryPage: React.FC = () => {
             </div>
           ) : viewMode === 'map' ? (
             <>
-              <MapSection courses={filteredCourses} />
+              <LazyMapSection courses={filteredCourses} />
               <div className="mt-4 text-sm text-center text-stone-500">
                 Showing {filteredCourses.length} courses
               </div>
@@ -323,12 +325,12 @@ const HistoryPage: React.FC = () => {
                   <h2 className="text-xl font-semibold mb-3">Courses</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredCourses.map(course => (
-                      <CourseCard
+            <CourseCard
                         key={course.id}
                         course={course}
                         onAddRound={() => {
-                          // Navigate to add round with this course
-                          window.location.href = `/add?courseId=${course.id}`;
+              // Navigate to add round with this course without full reload
+              navigate(`/add?courseId=${course.id}`);
                         }}
                       />
                     ))}

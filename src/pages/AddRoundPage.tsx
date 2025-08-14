@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { AppShell } from '../components/AppShell';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { useToast } from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, Calendar, Check, Upload, X } from 'lucide-react';
 import { collection, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
@@ -314,15 +314,25 @@ const AddRoundPage: React.FC = () => {
                   )}
                   
                   {searchResults.length > 0 && (
-                    <div className="mt-2 border rounded-lg divide-y max-h-60 overflow-y-auto">
+                    <div className="mt-2 border rounded-lg divide-y max-h-60 overflow-y-auto" role="listbox" aria-label="Course search results">
                       {searchResults.map(course => (
                         <div 
                           key={course.id}
-                          className="p-3 hover:bg-stone-50 cursor-pointer"
+                          className="p-3 hover:bg-stone-50 cursor-pointer focus:outline-none focus-visible:bg-stone-100"
+                          role="option"
+                          tabIndex={0}
                           onClick={() => {
                             setSelectedCourse(course);
                             setSearchResults([]);
                             setCourseSearch('');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSelectedCourse(course);
+                              setSearchResults([]);
+                              setCourseSearch('');
+                            }
                           }}
                         >
                           <div className="font-medium">{course.name}</div>

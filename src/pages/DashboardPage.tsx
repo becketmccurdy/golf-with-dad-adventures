@@ -4,7 +4,7 @@ import { AppShell } from '../components/AppShell';
 import { Card } from '../components/Card';
 import { StatTiles } from '../components/StatTiles';
 import { CourseCard } from '../components/CourseCard';
-import { MapSection } from '../components/MapSection';
+import { LazyMapSection } from '../components/LazyMapSection';
 import { Button } from '../components/Button';
 import { StatTilesSkeleton, CourseCardSkeleton, MapSectionSkeleton } from '../components/Skeletons';
 import { useNavigate } from 'react-router-dom';
@@ -126,47 +126,60 @@ const DashboardPage: React.FC = () => {
 
   return (
     <AppShell>
-      <div className="max-w-5xl mx-auto px-4 py-6 pb-20 sm:pb-6 space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="max-w-6xl mx-auto px-4 py-8 pb-24 lg:pb-8 space-y-8">
+        {/* Welcome Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-700 to-emerald-600 bg-clip-text text-transparent mb-2">
+            Welcome Back{userProfile?.displayName ? `, ${userProfile.displayName.split(' ')[0]}` : ''}!
+          </h1>
+          <p className="text-stone-600 text-lg">Ready for your next golf adventure?</p>
+        </div>
         
         {/* Stats */}
-        {loading ? (
-          <StatTilesSkeleton />
-        ) : (
-          <StatTiles
-            totalCourses={userProfile?.totalCourses || recentCourses.length}
-            totalRounds={userProfile?.totalRounds || 0}
-            mostPlayedCourse={mostPlayedCourse}
-            lastPlayedDate={lastPlayedDate}
-          />
-        )}
+        <div className="space-y-6">
+          {loading ? (
+            <StatTilesSkeleton />
+          ) : (
+            <StatTiles
+              totalCourses={userProfile?.totalCourses || recentCourses.length}
+              totalRounds={userProfile?.totalRounds || 0}
+              mostPlayedCourse={mostPlayedCourse}
+              lastPlayedDate={lastPlayedDate}
+            />
+          )}
+        </div>
         
-        {/* Map */}
-        <div className="mt-6">
+        {/* Map Section */}
+        <div className="space-y-6">
           {loading ? (
             <MapSectionSkeleton />
           ) : (
-            <MapSection courses={recentCourses} />
+            <LazyMapSection courses={recentCourses} />
           )}
         </div>
         
         {/* Recent courses */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-semibold">Recent Courses</h2>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Recent Courses</h2>
+              <p className="text-stone-600 mt-1">Your latest golf adventures</p>
+            </div>
             <Button 
-              variant="outline" 
+              variant="primary" 
               onClick={() => navigate('/add')}
-              className="text-sm"
+              className="flex items-center gap-2"
             >
-              <PlusCircle size={16} className="mr-1" />
+              <PlusCircle size={18} />
               Add Round
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {loading ? (
               <>
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
                 <CourseCardSkeleton />
                 <CourseCardSkeleton />
               </>
@@ -179,20 +192,29 @@ const DashboardPage: React.FC = () => {
                 />
               ))
             ) : (
-              <Card className="col-span-full p-8 text-center">
-                <p className="text-stone-500 mb-4">No rounds yet — log your first one.</p>
-                <Button onClick={() => navigate('/add')}>
-                  Add Your First Round
-                </Button>
+              <Card className="col-span-full text-center py-16">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                    <PlusCircle size={32} className="text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Your Golf Journey</h3>
+                    <p className="text-stone-600 mb-6">Log your first round and begin tracking your adventures on the course.</p>
+                    <Button onClick={() => navigate('/add')}>
+                      Add Your First Round
+                    </Button>
+                  </div>
+                </div>
               </Card>
             )}
           </div>
           
           {recentCourses.length > 0 && (
-            <div className="mt-4 text-center">
+            <div className="text-center">
               <Button 
-                variant="secondary" 
+                variant="outline" 
                 onClick={() => navigate('/history')}
+                className="px-8"
               >
                 View All Courses
               </Button>

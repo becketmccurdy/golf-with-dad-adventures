@@ -18,7 +18,8 @@ describe('Card', () => {
         <div>Test content</div>
       </Card>
     );
-    expect(screen.getByText('Test content').parentElement).toHaveClass('custom-class');
+    const cardElement = screen.getByText('Test content').closest('div[class*="bg-white"]');
+    expect(cardElement).toHaveClass('custom-class');
   });
 
   it('handles click events', () => {
@@ -29,7 +30,8 @@ describe('Card', () => {
       </Card>
     );
     
-    fireEvent.click(screen.getByText('Test content'));
+    const cardElement = screen.getByText('Test content').closest('div[class*="bg-white"]');
+    fireEvent.click(cardElement!);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
@@ -41,7 +43,8 @@ describe('Card', () => {
       </Card>
     );
     
-    expect(screen.getByText('Test content').parentElement).toHaveClass('cursor-pointer');
+    const cardElement = screen.getByText('Test content').closest('div[class*="bg-white"]');
+    expect(cardElement).toHaveClass('cursor-pointer');
   });
 
   it('does not add cursor-pointer class when onClick is not provided', () => {
@@ -51,6 +54,7 @@ describe('Card', () => {
       </Card>
     );
     
-    expect(screen.getByText('Test content').parentElement).not.toHaveClass('cursor-pointer');
+    const cardElement = screen.getByText('Test content').closest('div[class*="bg-white"]');
+    expect(cardElement).not.toHaveClass('cursor-pointer');
   });
 });

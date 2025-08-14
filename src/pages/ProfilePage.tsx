@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { User, Settings, Camera, Edit2 } from 'lucide-react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
-import { useToast } from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 const ProfilePage: React.FC = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
