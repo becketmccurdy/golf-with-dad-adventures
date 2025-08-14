@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { useToast } from '../hooks/useToast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, Calendar, Check, Upload, X } from 'lucide-react';
-import { collection, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { firestore, storage } from '../lib/firebase';
 import { courseConverter, roundConverter } from '../types';
@@ -39,6 +39,9 @@ const AddRoundPage: React.FC = () => {
   // Form state
   const [courseSearch, setCourseSearch] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [creatingCourse, setCreatingCourse] = useState(false);
+  const [newCourseName, setNewCourseName] = useState('');
+  const [newCourseLocation, setNewCourseLocation] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [score, setScore] = useState<string>('');
   const [par, setPar] = useState<string>('');
@@ -339,6 +342,68 @@ const AddRoundPage: React.FC = () => {
                           <div className="text-sm text-stone-500">{course.location}</div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Quick add if nothing found */}
+                  {courseSearch && !courseLoading && searchResults.length === 0 && (
+                    <div className="mt-3 p-3 border rounded-lg bg-stone-50">
+                      <div className="text-sm font-medium mb-2">Add new course</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Course name"
+                          className="w-full rounded-lg border border-stone-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent py-2 px-3"
+                          value={newCourseName}
+                          onChange={(e) => setNewCourseName(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="City, State"
+                          className="w-full rounded-lg border border-stone-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent py-2 px-3"
+                          value={newCourseLocation}
+                          onChange={(e) => setNewCourseLocation(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex justify-end mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          isLoading={creatingCourse}
+                          onClick={async () => {
+                            if (!currentUser || !newCourseName || !newCourseLocation) return;
+                            try {
+                              setCreatingCourse(true);
+                              const id = Date.now().toString();
+                              const courseDoc = doc(firestore, `users/${currentUser.uid}/coursesPlayed/${id}`);
+                              const now = new Date().toISOString();
+                              const course: Course = {
+                                id,
+                                name: newCourseName.trim(),
+                                location: newCourseLocation.trim(),
+                                lat: 0,
+                                lng: 0,
+                                country: 'USA',
+                                addedById: currentUser.uid,
+                                addedOn: now,
+                              };
+                              await setDoc(courseDoc, course);
+                              setSelectedCourse(course);
+                              setCourseSearch('');
+                              setNewCourseName('');
+                              setNewCourseLocation('');
+                              showToast('Course added', 'success');
+                            } catch (err) {
+                              console.error('Add course error:', err);
+                              showToast('Failed to add course', 'error');
+                            } finally {
+                              setCreatingCourse(false);
+                            }
+                          }}
+                        >
+                          Save Course
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

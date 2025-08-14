@@ -3,9 +3,11 @@ import { useAuth } from '../hooks/useAuth';
 import { AppShell } from '../components/AppShell';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { User, Settings, Camera, Edit2 } from 'lucide-react';
+import { User, Settings, Camera, Edit2, Trash2 } from 'lucide-react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { storage, auth, firestore } from '../lib/firebase';
+import { deleteUser } from 'firebase/auth';
+import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { useToast } from '../hooks/useToast';
 
 const ProfilePage: React.FC = () => {
@@ -98,6 +100,35 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       showToast('Failed to update profile', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser) return;
+    const confirmed = window.confirm('This will permanently delete your account and all associated data (rounds, courses, photos). This cannot be undone. Continue?');
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+
+      // Delete Firestore subcollections: rounds and coursesPlayed
+      const roundsSnap = await getDocs(collection(firestore, `users/${currentUser.uid}/rounds`));
+      await Promise.all(roundsSnap.docs.map((d) => deleteDoc(d.ref)));
+      const coursesSnap = await getDocs(collection(firestore, `users/${currentUser.uid}/coursesPlayed`));
+      await Promise.all(coursesSnap.docs.map((d) => deleteDoc(d.ref)));
+
+      // Delete user doc
+      await deleteDoc(doc(firestore, 'users', currentUser.uid));
+
+      // Delete auth user
+      await deleteUser(auth.currentUser!);
+
+      showToast('Account deleted', 'info');
+    } catch (error) {
+      console.error('Delete account error:', error);
+      showToast('Failed to delete account. You may need to re-authenticate.', 'error');
     } finally {
       setLoading(false);
     }
@@ -258,6 +289,12 @@ const ProfilePage: React.FC = () => {
                 >
                   <Edit2 size={16} className="mr-1" />
                   Save Profile
+                </Button>
+              </div>
+              <div className="flex justify-between items-center mt-4 pt-4 border-t border-stone-100">
+                <div className="text-xs text-stone-500">Danger Zone</div>
+                <Button type="button" variant="outline" onClick={handleDeleteAccount} className="text-red-600 border-red-200 hover:bg-red-50">
+                  <Trash2 size={16} className="mr-1" /> Delete Account
                 </Button>
               </div>
             </div>
